@@ -1,0 +1,66 @@
+server:
+  port: 9000
+  netty:
+    connection-timeout: 2s #How long to wait for a TCP connection to be established with the server
+    idle-timeout: 15s # How long to wait before closing a TCP connection if no data is transferred
+  shutdown: graceful
+
+spring:
+  application:
+    name: edge-service-task
+  lifecycle:
+    timeout-per-shutdown-phase: 15s
+
+  cloud:
+    gateway:
+
+      default-filters:
+        - SaveSession
+        - TokenRelay
+
+      routes:
+        - id: spa-route
+          uri: ${SPA_URL:http://localhost:9004}
+          predicates:
+            - Path=/,/*.css,/css/*,/js/*,/*.js,/favicon.ico,/fonts/**,/board/** # in vue js /css/*, /js/*  css,js files are stored
+
+        - id: board-service
+          uri: ${BOARD_SERVICE_URL:http://localhost:9001}
+          predicates:
+            - Path=/boards/**,/teams/**
+
+        - id: card-service
+          uri: ${CARD_SERVICE_URL:http://localhost:9002}
+          predicates:
+            - Path=/cards/**,/cardlists/**,/attachments/**
+
+#        - id: activity-service
+#          uri: ${ACTIVITY_SERVICE_URL:http://localhost:9005}
+#          predicates:
+#            - Path=/activities/**
+
+
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: edge-service-task
+            client-secret: task-agile-secret
+            scope: openid, roles
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8080/realms/TaskAgile
+
+  data:
+    redis:
+      connect-timeout: 2s
+      host: localhost
+      port: 6379
+      timeout: 1s
+
+  session:
+    store-type: redis
+    timeout: 10m
+    redis:
+      namespace: task:edge
