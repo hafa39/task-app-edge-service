@@ -22,7 +22,7 @@ spring:
         - id: spa-route
           uri: ${SPA_URL:http://localhost:9004}
           predicates:
-            - Path=/,/*.css,/css/*,/js/*,/*.js,/favicon.ico,/fonts/**,/board/** # in vue js /css/*, /js/*  css,js files are stored
+            - Path=/,/*.css,/css/*,/js/*,/*.js,/favicon.ico,/fonts/**,/board/**,/help # in vue js /css/*, /js/*  css,js files are stored
 
         - id: board-service
           uri: ${BOARD_SERVICE_URL:http://localhost:9001}
@@ -34,11 +34,23 @@ spring:
           predicates:
             - Path=/cards/**,/cardlists/**,/attachments/**
 
-#        - id: activity-service
-#          uri: ${ACTIVITY_SERVICE_URL:http://localhost:9005}
-#          predicates:
-#            - Path=/activities/**
+        - id: user-service
+          uri: ${USER_SERVICE_URL:http://localhost:9003}
+          predicates:
+            - Path=/extern/user/**,/avatars/**
 
+        - id: activity-service
+          uri: ${ACTIVITY_SERVICE_URL:http://localhost:9005}
+          predicates:
+            - Path=/activities/**
+
+      httpclient:
+        connect-timeout: 2000
+        response-timeout: 5s
+        pool:
+          type: elastic
+          max-idle-time: 15s
+          max-life-time: 60s
 
   security:
     oauth2:
@@ -64,3 +76,22 @@ spring:
     timeout: 10m
     redis:
       namespace: task:edge
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,redis
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
